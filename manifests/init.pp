@@ -1,10 +1,10 @@
 # == Class: accessbot
 #
 class accessbot(
-  $nick = '',
-  $password = '',
-  $server = '',
-  $channel_file = '',
+  $nick,
+  $password,
+  $server,
+  $channel_file,
 ) {
 
   user { 'accessbot':
