@@ -28,6 +28,11 @@ class accessbot(
     }
   }
 
+  package { 'irc':
+    ensure   => installed,
+    provider => openstack_pip,
+  }
+
   exec { 'run_accessbot' :
     command     => '/usr/local/bin/accessbot -c /etc/accessbot/accessbot.config -l /etc/accessbot/channels.yaml >> /var/log/accessbot/accessbot.log 2>&1',
     path        => '/usr/local/bin:/usr/bin:/bin/',
@@ -36,7 +41,8 @@ class accessbot(
     subscribe   => File['/etc/accessbot/channels.yaml'],
     require     => [File['/etc/accessbot/channels.yaml'],
                     File['/etc/accessbot/accessbot.config'],
-                    File['/usr/local/bin/accessbot']],
+                    File['/usr/local/bin/accessbot'],
+                    Package['irc']],
   }
 
   file { '/etc/accessbot':
