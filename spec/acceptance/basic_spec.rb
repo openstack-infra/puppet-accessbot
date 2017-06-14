@@ -33,16 +33,7 @@ describe 'basic accessbot' do
         it { should be_file }
         it { should be_owned_by 'root' }
         it { should be_mode 440 }
-        it { should be_grouped_into 'accessbo' }
-      end
-
-    end
-
-    context 'main proccess' do
-
-      describe process("accessbot") do
-        its(:user) { should eq "accessbot" }
-        its(:args) { should match /-c accessbot.config/ }
+        it { should be_grouped_into 'accessbot' }
       end
 
     end

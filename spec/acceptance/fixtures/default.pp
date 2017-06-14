@@ -1,6 +1,6 @@
 file { '/etc/channels.yaml':
   ensure  => file,
-  content => 'channels:\n  - name: openstack-rainbow-unicorn-pals',
+  content => "access:\n  nobody: +v\nglobal:\n  nobody:\n  - nobody\nchannels:\n  - name: openstack-rainbow-unicorn-pals",
 }
 
 class { '::accessbot':
