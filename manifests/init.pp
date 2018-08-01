@@ -57,6 +57,20 @@ class accessbot(
     require => User['accessbot'],
   }
 
+  include ::logrotate
+  logrotate::file { 'accessbot.log':
+    ensure  => present,
+    log     => '/var/log/accessbot/accessbot.log',
+    options => ['compress',
+                'copytruncate',
+                'delaycompress',
+                'missingok',
+                'rotate 7',
+                'daily',
+                'notifempty',
+                ],
+  }
+
   file { '/etc/accessbot/accessbot.config':
     ensure  => present,
     content => template('accessbot/accessbot.config.erb'),
