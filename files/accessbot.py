@@ -92,6 +92,7 @@ class SetAccess(irc.client.SimpleIRCClient):
 
     def _get_access_list(self, channel_name):
         ret = {}
+        alumni = []
         channel = None
         for c in self.config['channels']:
             if c['name'] == channel_name:
@@ -104,12 +105,15 @@ class SetAccess(irc.client.SimpleIRCClient):
             if access == 'mask':
                 mask = self.config['access'].get(nicks)
                 continue
+            if access == 'alumni':
+                alumni += nicks
+                continue
             flags = self.config['access'].get(access)
             if flags is None:
                 continue
             for nick in nicks:
                 ret[nick] = flags
-        return mask, ret
+        return mask, ret, alumni
 
     def _get_access_change(self, current, target, mask):
         remove = ''
@@ -136,13 +140,18 @@ class SetAccess(irc.client.SimpleIRCClient):
         return change
 
     def _get_access_changes(self):
-        mask, target = self._get_access_list(self.current_channel)
+        mask, target, alumni = self._get_access_list(self.current_channel)
         self.log.debug("Mask for %s: %s" % (self.current_channel, mask))
         self.log.debug("Target for %s: %s" % (self.current_channel, target))
         all_nicks = set()
+        global_alumni = self.config.get('alumni', {})
         current = {}
         changes = []
         for nick, flags, msg in self.current_list:
+            if nick in global_alumni or nick in alumni :
+                self.log.debug("%s is an alumni; removing access", nick)
+                changes.append('access #%s del %s' % (self.current_channel, nick))
+                continue
             all_nicks.add(nick)
             current[nick] = flags
         for nick in target.keys():
