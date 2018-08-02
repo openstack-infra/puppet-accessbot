@@ -81,6 +81,11 @@ class SetAccess(irc.client.SimpleIRCClient):
         if auth == '+' and nick == 'NickServ' and not self.identified:
             if msg.startswith('You are now identified'):
                 self.identified = True
+                # Prejoin and set ourselves as op in these channels,
+                # to facilitate +f forwarding.
+                for channel in self.config.get('op_channels', []):
+                    c.join("#%s" % channel)
+                    c.privmsg("chanserv", "op #%s" % channel)
                 self.advance()
                 return
         if auth != '+' or nick != 'ChanServ':
@@ -93,6 +98,7 @@ class SetAccess(irc.client.SimpleIRCClient):
     def _get_access_list(self, channel_name):
         ret = {}
         alumni = []
+        mode = ''
         channel = None
         for c in self.config['channels']:
             if c['name'] == channel_name:
@@ -108,12 +114,15 @@ class SetAccess(irc.client.SimpleIRCClient):
             if access == 'alumni':
                 alumni += nicks
                 continue
+            if access == 'mode':
+                mode = nicks
+                continue
             flags = self.config['access'].get(access)
             if flags is None:
                 continue
             for nick in nicks:
                 ret[nick] = flags
-        return mask, ret, alumni
+        return mask, ret, alumni, mode
 
     def _get_access_change(self, current, target, mask):
         remove = ''
@@ -140,11 +149,12 @@ class SetAccess(irc.client.SimpleIRCClient):
         return change
 
     def _get_access_changes(self):
-        mask, target, alumni = self._get_access_list(self.current_channel)
+        mask, target, alumni, mode = self._get_access_list(self.current_channel)
         self.log.debug("Mask for %s: %s" % (self.current_channel, mask))
         self.log.debug("Target for %s: %s" % (self.current_channel, target))
         all_nicks = set()
         global_alumni = self.config.get('alumni', {})
+        global_mode = self.config.get('mode', '')
         current = {}
         changes = []
         for nick, flags, msg in self.current_list:
@@ -162,6 +172,19 @@ class SetAccess(irc.client.SimpleIRCClient):
             if change:
                 changes.append('access #%s add %s %s' % (self.current_channel,
                                                          nick, change))
+
+        # Set the mode.  Note we always just hard-set the mode for
+        # simplicity (per the man page mlock always clears and sets
+        # anyway).  Channel mode overrides global mode.
+        #
+        # Note for +f you need to be op in the target channel; see
+        # op_channel option.
+        if not mode and global_mode:
+            mode = global_mode
+        self.log.debug("Setting mode to : %s" % mode)
+        if mode:
+            changes.append('set #%s mlock %s' % (self.current_channel, mode))
+
         return changes
 
     def advance(self, msg=None):
