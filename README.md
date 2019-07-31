@@ -1,5 +1,3 @@
-# OpenStack Accessbot Module
+# This repo has moved to OpenDev
 
-## Overview
-
-Configures Accessbot.
+It can now be found at [https://opendev.org/opendev/puppet-accessbot](https://opendev.org/opendev/puppet-accessbot)
